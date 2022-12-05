@@ -44,30 +44,72 @@ private:
 }PCB;
 
 struct Node{
-    PCB* pcb;
+    int pcb_id;
     Node* next;
-    Node(PCB* temp, Node* ptr = nullptr)
-        :pcb(temp),
+    Node(int id, Node* ptr = nullptr)
+        :pcb_id(id),
         next(ptr)
     {}
     ~Node()
-    {
-        delete this->pcb;
-    }
+    {}
 };
 
 class pcb_list{
 public:
     void ProcessRun()
     {
-        while(1)
+        while(Run  != -1)
         {
-
+            this->PCD_show();
+            this->run();
+        }
+    }
+    void PCD_show()
+    {
+        cout.width(3);
+        cout<<"===================================================================="<<endl;
+        cout<<"RUNNING PROC.                        "<<"WAITING QUEUE"<<endl;
+        cout<<"                                   ";
+        for(Node* ptr = this->Head; ptr != nullptr; ptr = ptr->next)
+            cout<<ptr->pcb_id<<"    ";
+        cout<<endl;
+        cout<<"===================================================================="<<endl;
+        cout<<"ID"<<"                            ";
+        for(int i = 1; i <= Pcount; i++)
+        {
+            cout << PCB_Data[i]->ID <<"    ";
+        }
+        cout<<endl;
+        cout<<"PRIORITY//TURNTIME"<<"            ";
+        for(int i = 1; i <= Pcount; i++)
+        {
+            cout << PCB_Data[i]->Priority<<"    ";
+        }
+        cout<<endl;
+        cout<<"CPUTIME"<<"                       ";
+        for(int i = 1; i <= Pcount; i++)
+        {
+            cout << PCB_Data[i]->Runtime<<"    ";
+        }
+        cout<<endl;
+        cout<<"ALLTIME"<<"                       ";
+        for(int i = 1; i <= Pcount; i++)
+        {
+            cout << PCB_Data[i]->Totaltime<<"    ";
+        }
+        cout<<endl;
+        cout<<"STATE"<<"                         ";
+        for(int i = 1; i <= Pcount; i++)
+        {
+            if(PCB_Data[i]->Pstatus == RUN)
+                cout << "R" <<"    ";
+            else
+                cout << "W" <<"    ";
         }
     }
 
     pcb_list(Alg choice)
-        :Run(nullptr),
+        :Run(0),
         Head(nullptr),
         Tail(nullptr),
         PCB_Data(vector<PCB*>(1, new PCB())),
@@ -78,10 +120,11 @@ public:
         switch (alg)
         {
         case FB:
-            Run = PCB_Data[1];
-            PCB_Data[0]->Pstatus = RUN;
-            Head = Tail = new Node(PCB_Data[1]);
-            for(int i = 2; i < Pcount; i++)
+            Run = 1;
+            PCB_Data[1]->Pstatus = RUN;
+            Head = Tail = new Node(2);
+            for(int i = 3; i <= Pcount; i++)
+                Tail = Tail->next = new Node(i);
             break;
         
         default:
@@ -105,7 +148,7 @@ public:
     }
 
 private:
-    PCB* Run;
+    int Run;
     Node* Head;
     Node* Tail;
     vector<PCB*> PCB_Data;
