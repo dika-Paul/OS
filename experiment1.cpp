@@ -2,10 +2,10 @@
 
 using namespace std;
 
-const int Pcount = 5;
+const int Pcount = 9;
 
 enum Status{
-    RUN, WAIT
+    RUN, WAIT, FIN
 };
 enum Alg{
     FB, PRI
@@ -33,7 +33,8 @@ public:
             break;
         }
     }
-    ~ProcessControlBlock();
+    ~ProcessControlBlock()
+    {}
 
 private:
     int ID;
@@ -61,12 +62,21 @@ public:
         while(Run  != -1)
         {
             this->PCD_show();
-            this->run();
+            switch (this->alg)
+            {
+                case FB:
+                    this->fb();
+                    break;
+        
+                default:
+                    this->pri();
+                    break;
+            }
         }
+        this->PCD_show();
     }
     void PCD_show()
     {
-        cout.width(3);
         cout<<"===================================================================="<<endl;
         cout<<"RUNNING PROC.                        "<<"WAITING QUEUE"<<endl;
         cout<<"                                   ";
@@ -77,37 +87,64 @@ public:
         cout<<"ID"<<"                            ";
         for(int i = 1; i <= Pcount; i++)
         {
-            cout << PCB_Data[i]->ID <<"    ";
+            cout.width(5);
+            cout << PCB_Data[i]->ID;
         }
         cout<<endl;
         cout<<"PRIORITY//TURNTIME"<<"            ";
         for(int i = 1; i <= Pcount; i++)
         {
-            cout << PCB_Data[i]->Priority<<"    ";
+            cout.width(5);
+            cout << PCB_Data[i]->Priority;
         }
         cout<<endl;
         cout<<"CPUTIME"<<"                       ";
         for(int i = 1; i <= Pcount; i++)
         {
-            cout << PCB_Data[i]->Runtime<<"    ";
+            cout.width(5);
+            cout << PCB_Data[i]->Runtime;
         }
         cout<<endl;
         cout<<"ALLTIME"<<"                       ";
         for(int i = 1; i <= Pcount; i++)
         {
-            cout << PCB_Data[i]->Totaltime<<"    ";
+            cout.width(5);
+            cout << PCB_Data[i]->Totaltime;
         }
         cout<<endl;
         cout<<"STATE"<<"                         ";
         for(int i = 1; i <= Pcount; i++)
         {
+            cout.width(5);
             if(PCB_Data[i]->Pstatus == RUN)
-                cout << "R" <<"    ";
+                cout << "R";
+            else if(PCB_Data[i]->Pstatus == WAIT)
+                cout << "W";
             else
-                cout << "W" <<"    ";
+                cout << "F";
+        }
+        cout << endl;
+    }
+    void Process_push(int pcd_id)
+    {
+        if(this->PCB_Data[pcd_id]->Priority < this->PCB_Data[Head->pcb_id]->Priority)
+            this->Head = new Node(pcd_id, Head);
+        else
+        {
+            Node* ptr = this->Head;
+            while(ptr->next != nullptr)
+            {
+                int next_id = ptr->next->pcb_id;
+                if(this->PCB_Data[pcd_id]->Priority < this->PCB_Data[next_id]->Priority)
+                    break;
+                ptr = ptr->next;
+            }
+            ptr->next = new Node(pcd_id, ptr->next);
+            if(ptr == this->Tail)
+                this->Tail = this->Tail->next;
         }
     }
-
+    
     pcb_list(Alg choice)
         :Run(0),
         Head(nullptr),
@@ -133,7 +170,7 @@ public:
     }    
     ~pcb_list()
     {
-        while(Head->next != nullptr)
+        while(Head != nullptr)
         {
             Node* next = Head->next;
             delete Head;
@@ -154,12 +191,42 @@ private:
     vector<PCB*> PCB_Data;
     Alg alg;
 
-    void run();
-    void fb();
-    void pri();
+    void fb()
+    {
+        PCB* running_pcb = this->PCB_Data[Run];
+        running_pcb->Runtime += running_pcb->Priority;
+        if(running_pcb->Runtime >= running_pcb->Totaltime)
+        {
+            running_pcb->Pstatus = FIN;
+            this->Run = this->Head == nullptr ? -1 : this->Head->pcb_id;
+            if(this->Run != -1)
+            {
+                this->PCB_Data[Run]->Pstatus = RUN;
+                Node* next = Head->next;
+                delete Head;
+                Head = next;
+            }
+            
+        }
+        else
+        {
+            running_pcb->Pstatus = WAIT;
+            running_pcb->Priority += 1;
+            this->Process_push(Run);
+            this->Run = this->Head->pcb_id;
+            this->PCB_Data[Run]->Pstatus = RUN;
+            Node* next = Head->next;
+            delete Head;
+            Head = next;
+        }
+    }
+    void pri()
+    {}
 };
 
 int main()
 {
+    pcb_list a(FB);
+    a.ProcessRun();
     return 0;
 }
