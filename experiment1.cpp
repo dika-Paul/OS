@@ -3,6 +3,7 @@
 using namespace std;
 
 const int Pcount = 9;
+const int Runtime = 1;
 
 enum Status{
     RUN, WAIT, FIN
@@ -127,7 +128,9 @@ public:
     }
     void Process_push(int pcd_id)
     {
-        if(this->PCB_Data[pcd_id]->Priority < this->PCB_Data[Head->pcb_id]->Priority)
+        if(this->Head == nullptr)
+            this->Head = this->Tail = new Node(pcd_id, Head);
+        else if(this->PCB_Data[pcd_id]->Priority < this->PCB_Data[Head->pcb_id]->Priority)
             this->Head = new Node(pcd_id, Head);
         else
         {
@@ -145,6 +148,11 @@ public:
         }
     }
     
+    static bool cmp(PCB* a, PCB* b)
+    {
+        return a->Priority < b->Priority;
+    }
+
     pcb_list(Alg choice)
         :Run(0),
         Head(nullptr),
@@ -158,13 +166,20 @@ public:
         {
         case FB:
             Run = 1;
-            PCB_Data[1]->Pstatus = RUN;
+            PCB_Data[Run]->Pstatus = RUN;
             Head = Tail = new Node(2);
             for(int i = 3; i <= Pcount; i++)
                 Tail = Tail->next = new Node(i);
             break;
         
         default:
+            vector<PCB*> sort_arry(PCB_Data);
+            sort(sort_arry.begin()+1, sort_arry.end(), cmp);
+            Run = sort_arry[1]->ID;
+            PCB_Data[Run]->Pstatus = RUN;
+            Head = Tail = new Node(sort_arry[2]->ID);
+            for(int i = 3; i <= Pcount; i++)
+                Tail = Tail->next = new Node(sort_arry[i]->ID);
             break;
         }
     }    
@@ -194,7 +209,7 @@ private:
     void fb()
     {
         PCB* running_pcb = this->PCB_Data[Run];
-        running_pcb->Runtime += running_pcb->Priority;
+        running_pcb->Runtime += running_pcb->Priority * Runtime;
         if(running_pcb->Runtime >= running_pcb->Totaltime)
         {
             running_pcb->Pstatus = FIN;
@@ -206,7 +221,6 @@ private:
                 delete Head;
                 Head = next;
             }
-            
         }
         else
         {
@@ -221,12 +235,38 @@ private:
         }
     }
     void pri()
-    {}
+    {
+        PCB* running_pcb = this->PCB_Data[Run];
+        running_pcb->Runtime += Runtime;
+        if(running_pcb->Runtime >= running_pcb->Totaltime)
+        {
+            running_pcb->Pstatus = FIN;
+            this->Run = this->Head == nullptr ? -1 : this->Head->pcb_id;
+            if(this->Run != -1)
+            {
+                this->PCB_Data[Run]->Pstatus = RUN;
+                Node* next = Head->next;
+                delete Head;
+                Head = next;
+            }
+        }
+        else
+        {
+            running_pcb->Pstatus = WAIT;
+            running_pcb->Priority += 3;
+            this->Process_push(Run);
+            this->Run = this->Head->pcb_id;
+            this->PCB_Data[Run]->Pstatus = RUN;
+            Node* next = Head->next;
+            delete Head;
+            Head = next;
+        }
+    }
 };
 
 int main()
 {
-    pcb_list a(FB);
+    pcb_list a(PRI);
     a.ProcessRun();
     return 0;
 }
