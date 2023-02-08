@@ -2,6 +2,7 @@
 
 const int USER_MAXN = 10;
 const int FILE_MAXN = 10;
+const int OPEN_MAXN = 5;
 
 struct FILE_node{
     std::string file_name;
@@ -13,7 +14,7 @@ struct FILE_node{
         file_protect_num(0),
         file_length(0)
     {}
-    FILE_node(std::string name, int protect_num, int length)
+    FILE_node(std::string name, int protect_num = 7, int length = 0)
         :file_name(name),
         file_protect_num(protect_num),
         file_length(length)
@@ -57,18 +58,23 @@ struct  OPEN_FILE_node{
     int file_protect_num;
     FILE_node* file_ptr;
     
-    OPEN_FILE_node(int num, int protect_num, FILE_node* ptr)
+    OPEN_FILE_node(int num)
         :file_num(num),
-        file_protect_num(protect_num),
-        file_ptr(ptr)
+        file_protect_num(0),
+        file_ptr(nullptr)
+    {}
+    int open_file(int protect_num, FILE_node* ptr)
     {
-        while(file_ptr->file_protect_num & file_protect_num != file_protect_num)
+        while((ptr->file_protect_num & file_protect_num) != protect_num)
         {
             std::cout << "Your file's open mode is illeage! input again     ";
             std::cin >> protect_num;
-            protect_num = (protect_num/100)<<2 + (protect_num%100/10)<<1 + (protect_num%10);
+            protect_num = ((protect_num/100)<<2) + ((protect_num%100/10)<<1) + (protect_num%10);
             file_protect_num = protect_num;
         }
+        file_protect_num = protect_num;
+        file_ptr = ptr;
+        return file_num;
     }
 }OFN;
 
@@ -98,10 +104,12 @@ public:
     void sys_operate()
     {
         user_it = user_directory.begin();
+        for(int i = 1; i <= OPEN_MAXN; i++)                     //将存放打开文件的链表初始化
+            open_file_directory.push_back(OFN(i));
         std::cout << "Your name?     ";
         std::string name;
         std::cin >> name;
-        while((*user_it).user_name != name)                    //遍历链表查找用户名,若没找到用户名，则重新输入
+        while((*user_it).user_name != name)                     //遍历链表查找用户名,若没找到用户名，则重新输入
         {
             user_it++;
             if(user_it == user_directory.end())
@@ -123,6 +131,7 @@ public:
             else if(input_command == "close")   close();
             else if(input_command == "write")   write();
             else    std::cout << "Command name given is wrong, input again    ";
+            std::cout << "Command name?   ";
             std::cin >> input_command;
         }    
         (*user_it).directory_info_print(); 
@@ -134,11 +143,84 @@ private:
     std::list<OFN> open_file_directory;
     std::list<UFD>::iterator user_it;
     void creat()
-    {}
+    {
+        if((*user_it).file_directory.size() == FILE_MAXN)
+        {
+            std::cout << "Your space is full, cann't create any more file.\n";
+            return;
+        }
+        std::cout << "The new file's name(less than 9 chars)?    ";
+        std::string file_name;
+        std::cin >> file_name;
+        std::cout << "The new file's protection code?     ";
+        int file_protect_num;
+        std::cin >> file_protect_num;
+        file_protect_num = ((file_protect_num/100)<<2) + ((file_protect_num%100/10)<<1) + (file_protect_num%10);
+        (*user_it).file_directory.push_back(new FILE_node(file_name, file_protect_num));
+        std::cout << "The new file is created\n";
+        return;
+    }
     void del()
-    {}
+    {   
+        if((*user_it).file_directory.size() == 0)
+            {
+                std::cout << "There is no file.\n";
+                return;
+            }
+        std::cout << "The file's name to be deleted?    ";
+        std::string file_name;
+        std::cin >> file_name;
+        std::list<FILE_node*>::iterator file_it = (*user_it).file_directory.begin();
+        while((*file_it)->file_name != file_name)
+        {
+            file_it++;
+            if(file_it == (*user_it).file_directory.end())
+            {
+                std::cout << "There have not this file, try again.    ";
+                std::cin >> file_name;
+                file_it = (*user_it).file_directory.begin();
+            }
+        }
+        (*user_it).file_directory.erase(file_it);
+        std::cout << "The file has been deleted.\n";
+    }
     void open()
-    {}
+    {
+        if((*user_it).file_directory.size() == 0)
+        {
+            std::cout << "There is no file.\n";
+            return;
+        }
+        std::cout << "The file's name to be opened?    ";
+        std::string file_name;
+        std::cin >> file_name;
+        std::list<FILE_node*>::iterator file_it = (*user_it).file_directory.begin();
+        while((*file_it)->file_name != file_name)
+        {
+            file_it++;
+            if(file_it == (*user_it).file_directory.end())
+            {
+                std::cout << "There have not this file, try again.    ";
+                std::cin >> file_name;
+                file_it = (*user_it).file_directory.begin();
+            }
+        }
+        std::cout << "Enter the open mode.     ";
+        int file_protect_num;
+        std::cin >> file_protect_num;
+        file_protect_num = ((file_protect_num/100)<<2) + ((file_protect_num%100/10)<<1) + (file_protect_num%10);
+        for(auto it = open_file_directory.begin(); it != open_file_directory.end(); it++)
+        {
+            if((*it).file_ptr == nullptr)
+            {
+                int No = (*it).open_file(file_protect_num, (*file_it));
+                std::cout << "This file is opened, its open number is " << No << std::endl;
+                return;
+            }
+        }
+        std::cout << "There is not enough space to open file.\n";
+        return;
+    }
     void close()
     {}
     void read()
