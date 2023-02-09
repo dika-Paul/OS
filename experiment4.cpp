@@ -65,7 +65,7 @@ struct  OPEN_FILE_node{
     {}
     int open_file(int protect_num, FILE_node* ptr)
     {
-        while((ptr->file_protect_num & file_protect_num) != protect_num)
+        while((ptr->file_protect_num & protect_num) != protect_num)
         {
             std::cout << "Your file's open mode is illeage! input again     ";
             std::cin >> protect_num;
@@ -75,6 +75,34 @@ struct  OPEN_FILE_node{
         file_protect_num = protect_num;
         file_ptr = ptr;
         return file_num;
+    }
+    void close_file()
+    {
+        file_protect_num = 0;
+        file_ptr = nullptr;
+        return;
+    }
+    void read_file()
+    {
+        if((file_protect_num - (file_protect_num>>2) - file_num%2) == 0)
+        {
+            std::cout << "Error message: it is not allowed to read this file!!!\n";
+            return;
+        }
+        std::cout << "This file's length is " << file_ptr->file_length << std::endl;
+        return;
+    }
+    void write_file()
+    {
+        if((file_protect_num>>2) == 0)
+        {
+            std::cout << "Error message: it is not allowed to write this file!!!\n";
+            return;
+        }
+        std::string str;
+        std::cin >> str;
+        file_ptr->file_length = str.length();
+        return;
     }
 }OFN;
 
@@ -222,11 +250,72 @@ private:
         return;
     }
     void close()
-    {}
+    {
+        std::cout << "The open file number to be closed?      ";
+        int file_num;
+        std::cin >> file_num;
+        while(file_num <=0 || file_num > OPEN_MAXN)
+        {
+            std::cout << "The number given is illeage, try again.";
+            std:: cin >> file_num;
+        }
+        std::list<OFN>::iterator it = open_file_directory.begin();
+        while(file_num != 1)
+        {
+            it++;
+            file_num--;
+        }
+        (*it).close_file();
+        std::cout << "This file is closed.\n";
+    }
     void read()
-    {}
+    {
+        if(open_file_directory.size() == 0)
+        {
+            std::cout << "There is no file to read\n";
+            return;
+        }
+        std::cout << "Open file number?    ";
+        int file_num;
+        std::cin >> file_num;
+        std::list<OFN>::iterator it = open_file_directory.begin();
+        while(file_num != 1)
+        {
+            it++;
+            file_num--;
+        }
+        if((*it).file_ptr == nullptr)
+        {
+            std::cout << "There is no file at this number.\n";
+            return;
+        }
+        (*it).read_file();
+        return;
+    }
     void write()
-    {}
+    {
+        if(open_file_directory.size() == 0)
+        {
+            std::cout << "There is no file to write\n";
+            return;
+        }
+        std::cout << "Open file number?    ";
+        int file_num;
+        std::cin >> file_num;
+        std::list<OFN>::iterator it = open_file_directory.begin();
+        while(file_num != 1)
+        {
+            it++;
+            file_num--;
+        }
+        if((*it).file_ptr == nullptr)
+        {
+            std::cout << "There is no file at this number.\n";
+            return;
+        }
+        (*it).write_file();
+        return;
+    }
 }MFS;
 
 
