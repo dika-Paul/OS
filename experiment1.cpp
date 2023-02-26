@@ -2,7 +2,7 @@
 
 using namespace std;
 
-const int Pcount = 9;
+const int Pcount = 7;
 const int Runtime = 1;
 
 enum Status{
@@ -266,7 +266,7 @@ private:
 
 int main()
 {
-    pcb_list a(PRI);
+    pcb_list a(FB);
     a.ProcessRun();
     return 0;
 }
