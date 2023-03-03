@@ -186,6 +186,7 @@ private:
         file_protect_num = ((file_protect_num/100)<<2) + ((file_protect_num%100/10)<<1) + (file_protect_num%10);
         (*user_it).file_directory.push_back(new FILE_node(file_name, file_protect_num));
         std::cout << "The new file is created\n";
+        (*user_it).directory_info_print();
         return;
     }
     void del()
@@ -209,8 +210,23 @@ private:
                 file_it = (*user_it).file_directory.begin();
             }
         }
+        bool flag = true;
+        for(auto it : open_file_directory)
+        {
+            if(it.file_ptr->file_name == (*file_it)->file_name)
+            {
+                flag = false;
+                break;
+            }
+        }
+        if(!flag) 
+        {    
+            (*user_it).directory_info_print();
+            return;
+        }
         (*user_it).file_directory.erase(file_it);
         std::cout << "The file has been deleted.\n";
+        (*user_it).directory_info_print();
     }
     void open()
     {
@@ -247,6 +263,7 @@ private:
             }
         }
         std::cout << "There is not enough space to open file.\n";
+        (*user_it).directory_info_print();
         return;
     }
     void close()
@@ -267,6 +284,7 @@ private:
         }
         (*it).close_file();
         std::cout << "This file is closed.\n";
+        (*user_it).directory_info_print();
     }
     void read()
     {
@@ -290,6 +308,7 @@ private:
             return;
         }
         (*it).read_file();
+        (*user_it).directory_info_print();
         return;
     }
     void write()
@@ -314,6 +333,7 @@ private:
             return;
         }
         (*it).write_file();
+        (*user_it).directory_info_print();
         return;
     }
 }MFS;
